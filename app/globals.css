@@ -3,27 +3,122 @@
 @tailwind utilities;
 
 :root {
-  --foreground-rgb: 0, 0, 0;
-  --background-start-rgb: 214, 219, 220;
+  --foreground-rgb: 52, 56, 62;
+  --background-start-rgb: 246, 248, 250;
   --background-end-rgb: 255, 255, 255;
+  --background-data-rgb: 232, 235, 239;
+  --background-ad-rgb: 240, 168, 41;
+  /* orange */
+  --background-ad-txt: 0, 0, 0;
+  --background-live-rgb: 235, 79, 105;
+  /* red */
+  --background-live-txt: 0, 0, 0;
+  --background-short-rgb: 19, 236, 236;
+  /* cyan */
+  --background-short-txt: 0, 0, 0;
+  --background-x-rgb: 110, 110, 252;
+  /* blue */
+  --background-x-txt: 0, 0, 0;
+  --background-other-rgb: 52, 243, 53;
+  /* green */
+  --background-other-txt: 0, 0, 0;
+  --background-hot-rgb: 244, 37, 244;
+  /* magenta */
+  --background-hot-txt: 0, 0, 0;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
     --foreground-rgb: 255, 255, 255;
-    --background-start-rgb: 0, 0, 0;
-    --background-end-rgb: 0, 0, 0;
+    --background-start-rgb: 35, 39, 46;
+    --background-end-rgb: 29, 33, 40;
+    --background-data-rgb: 57, 63, 71;
   }
 }
 
 body {
   color: rgb(var(--foreground-rgb));
-  background: linear-gradient(
-      to bottom,
+  background: linear-gradient(to bottom,
       transparent,
-      rgb(var(--background-end-rgb))
-    )
-    rgb(var(--background-start-rgb));
+      rgb(var(--background-end-rgb))) rgb(var(--background-start-rgb));
+}
+
+h1 {
+  max-width: 12ch;
+  overflow: hidden;
+  text-overflow: hidden;
+  white-space: nowrap;
+  text-shadow: 2px 2px 4px #808080;
+}
+
+.img-wrapper {
+  width: 100%;
+  height: auto;
+  aspect-ratio: 1.91;
+  margin-bottom: -16px;
+}
+
+.min-w {
+  min-width: 230px;
+}
+
+.max-w {
+  max-width: 1200px;
+}
+
+.live {
+  background: rgb(var(--background-live-rgb));
+  color: rgb(var(--background-live-txt));
+}
+
+.ad {
+  background: rgb(var(--background-ad-rgb));
+  color: rgb(var(--background-ad-txt));
+}
+
+button.rounded .data,
+div.rounded .data {
+  background: rgb(var(--background-data-rgb));
+  margin: 0 auto 0 auto;
+  width: calc(100% - 32px);
+  transition: all .25s linear;
+  overflow-wrap: break-word;
+}
+
+button.rounded:hover .data,
+div.rounded:hover .data {
+  width: calc(100% - .5rem);
+  margin: -24px auto 0 auto;
+  font-size: 1.1em;
+  transition: all .25s linear;
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    opacity: 1;
+  }
+
+  50% {
+    opacity: .5;
+  }
+}
+
+.skeleton-img,
+.skeleton-text {
+  background-color: #808080;
+  border-radius: .25rem;
+  animation: pulse 2s infinite;
+  display: block;
+}
+
+.skeleton-text {
+  height: calc(100% - 2px);
+}
+
+.skeleton-text:nth-child(2) {
+  margin: 3px 0;
 }
 
 @layer utilities {
