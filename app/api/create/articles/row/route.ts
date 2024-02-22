@@ -1,6 +1,7 @@
 import { sql } from '@vercel/postgres';
 import { NextRequest, NextResponse } from 'next/server';
 import { getMetaData, getYouTubeData } from '@/lib/url';
+import { revalidatePath } from 'next/cache';
 
 /**
  * Example: http://localhost:3000/api/create/articles/row?url=https%3A%2F%2Fscoutlife.org%2Fhobbies-projects%2Ffunstuff%2F575%2Fmorse-code-translator%2F
@@ -54,7 +55,9 @@ export async function GET(request: NextRequest) {
       VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
     `;
 
-    console.log(`create/articles/row `, articles);
+    console.log(`create/articles/row result for ${url}`, articles);
+    
+    revalidatePath('/');
 
     return NextResponse.json({ articles }, { status: 200 });
   } catch (error) {
