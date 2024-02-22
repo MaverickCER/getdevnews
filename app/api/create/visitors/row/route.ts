@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     if (isBot) return NextResponse.json({ error: "bot detected" }, { status: 207 });
 
     const date = Date.now();
-    const visitors = await sql`INSERT INTO visitors (date) VALUES (${date};`;
+    const visitors = await sql`INSERT INTO visitors (date) VALUES (${date});`;
 
     console.log(`create/visitors/row result`, visitors);
 
