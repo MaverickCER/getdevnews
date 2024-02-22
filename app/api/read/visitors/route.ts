@@ -11,10 +11,15 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   try {
-    const visitors = await sql`
-      SELECT COUNT(*) FROM visitors WHERE date > EXTRACT(EPOCH FROM NOW()) - 24 * 60 * 60 * 1000;
+    const date = (Date.now() - 24 * 60 * 60 * 1000) * 0;
+
+    const result = await sql`
+      SELECT COUNT(*) FROM visitors WHERE date > ${date};
     `;
-    return NextResponse.json({ visitors }, { status: 200 });
+
+    console.log(`read/visitors result`, result);
+
+    return NextResponse.json({ result }, { status: 200 });
   } catch (error) {
     console.error(`read/visitors encountered error`, error);
     return NextResponse.json({ error }, { status: 500 });

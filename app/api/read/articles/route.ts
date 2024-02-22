@@ -13,9 +13,14 @@ import { NextResponse } from 'next/server';
  */
 export async function GET() {
   try {
+    const date = Date.now() - 24 * 60 * 60 * 1000;
+
     const result = await sql`
-      SELECT * FROM articles WHERE date > EXTRACT(EPOCH FROM NOW()) - 24 * 60 * 60 * 1000;
+      SELECT * FROM articles WHERE date > ${date} ORDER BY date DESC;
     `;
+
+    console.log(`read/articles result`, result);
+
     return NextResponse.json({ result }, { status: 200 });
   } catch (error) {
     console.error(`read/articles encountered error`, error);

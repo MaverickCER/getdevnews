@@ -15,7 +15,7 @@ export default function Visitors() {
     if (!window) return;
     await updateVisitors();
     const visitors = await getVisitors();
-    setVisitors(typeof visitors === 'number' ? visitors : 0);
+    setVisitors(visitors);
   };
 
   useEffect(() => {
