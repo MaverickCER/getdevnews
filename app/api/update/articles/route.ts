@@ -19,9 +19,14 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const source = decodeURIComponent(searchParams.get('source') || '');
 
+    console.log(`update/articles source ${source}`);
+
     const result = await sql`
       UPDATE articles SET visits = visits + 1 WHERE source = ${source}
     `;
+
+    console.log(`update/articles result for source ${source}`, result);
+
     return NextResponse.json({ result }, { status: 200 });
   } catch (error) {
     console.error(`update/articles encountered error`, error);

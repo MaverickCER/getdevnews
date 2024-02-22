@@ -32,6 +32,9 @@ export async function GET(request: NextRequest) {
         title TEXT
       );
     `;
+
+    console.log(`create/articles/table result`, result);
+
     return NextResponse.json({ result }, { status: 200 });
   } catch (error) {
     console.error(`create/articles/table encountered error`, error);

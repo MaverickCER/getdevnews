@@ -30,6 +30,9 @@ export async function GET(request: NextRequest) {
         os TEXT
       );
     `;
+
+    console.log(`create/visitors/table `, result);
+
     return NextResponse.json({ result }, { status: 200 });
   } catch (error) {
     console.error(`create/visitors/table encountered error`, error);

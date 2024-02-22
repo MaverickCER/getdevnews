@@ -27,6 +27,9 @@ export async function GET(request: NextRequest) {
 
     const date = Date.now();
     const visitors = await sql`INSERT INTO visitors (date) VALUES (${date};`;
+
+    console.log(`create/visitors/row result`, visitors);
+
     return NextResponse.json({ visitors }, { status: 200 });
   } catch (error) {
     console.error(`create/visitors/row encountered error`, error);
