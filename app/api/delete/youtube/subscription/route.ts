@@ -22,11 +22,13 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const channelId = searchParams.get('channelId') || '';
     if (!channelId) return NextResponse.json({ error: "Invalid channelId" }, { status: 400 });
-    const topic = `https://www.youtube.com/xml/feeds/videos.xml?channel_id=${channelId}`;
+
+    console.log(`delete/youtube/subscription channelId ${channelId}`);
+
     const formData = new URLSearchParams();
-    formData.append('hub.callback', 'https://www.getdevnews.com/webhook/youtube');
+    formData.append('hub.callback', 'https://www.getdevnews.com/api/webhook/youtube');
     formData.append('hub.mode', 'unsubscribe');
-    formData.append('hub.topic', topic);
+    formData.append('hub.topic', `https://www.youtube.com/xml/feeds/videos.xml?channel_id=${channelId}`);
     formData.append('hub.secret', process.env.YOUTUBE_API_SECRET || '');
 
     const requestOptions = {
@@ -38,6 +40,8 @@ export async function GET(request: NextRequest) {
     };
 
     const response = await fetch('https://pubsubhubbub.appspot.com/', requestOptions);
+
+    console.log(`delete/youtube/subscription response for channelId ${channelId}`, response);
 
     return NextResponse.json({ response: response.statusText }, { status: 200 });
   } catch (error) {
