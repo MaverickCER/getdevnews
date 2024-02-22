@@ -1,5 +1,6 @@
 import { getBase64, getBlobURL } from '@/lib/img';
 import { google } from 'googleapis'
+import { getDurationFromPT } from './duration';
 
 /**
  * Asynchronous function to retrieve metadata from a given URL. The system verifies
@@ -54,6 +55,7 @@ export async function getMetaData(url: string) {
       dataURL,
       date,
       description: description.length > 160 ? description?.substring(0, 160) + '...' : description,
+      duration: 0,
       keywords,
       source,
       tag: '',
@@ -80,7 +82,7 @@ export async function getYouTubeData(url: string) {
   try {
     const youtube = google.youtube({
       version: 'v3',
-      auth: process.env.YOUTUBE_API_KEY,
+      key: process.env.YOUTUBE_API_KEY,
     });
     
     // Regular expression to match YouTube video ID
@@ -90,17 +92,19 @@ export async function getYouTubeData(url: string) {
     const videoId = match[1];
 
     const response = await youtube.videos.list({
-      part: ['snippet', 'fileDetails'],
+      part: ['snippet', 'contentDetails'],
       id: [videoId],
     });
 
     const video = response?.data?.items?.[0];
-    if (!video || !video.snippet || !video.fileDetails) return null;
+    if (!video || !video.snippet || !video.contentDetails) return null;
+    const duration = getDurationFromPT(video.contentDetails.duration || '');
 
     const isLive = video.snippet.liveBroadcastContent === 'live';
-    const isShort = parseInt(video.fileDetails.durationMs || '300000') < 5 * 60 * 1000;
+    const isShort = duration < 5 * 60 * 1000;
     return {
       byline: video.snippet.channelTitle || 'YouTube',
+      duration,
       keywords: video.snippet.tags || [],
       tag: isLive ? 'live' : isShort ? 'short' : ''
     };

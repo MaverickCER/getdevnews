@@ -1,20 +1,10 @@
+import type { TArticleProps } from '@/components/article';
 import Article from '@/components/article';
 import Footer from '@/components/footer';
 import Header from '@/components/header';
 import Insights from '@/components/insights';
 import Skeleton from '@/components/skeleton';
 import { getArticles } from '@/lib/articles';
-
-type TArticle = {
-  blurdataurl: string;
-  byline: string;
-  dataurl: string;
-  date: number;
-  description: string;
-  source: string;
-  tag: string;
-  title: string;
-};
 
 export default async function Home() {
   const articles = await getArticles();
@@ -27,14 +17,15 @@ export default async function Home() {
           <Skeleton count={10} />
         ) : (
           articles.map(
-            ({ blurdataurl, byline, dataurl, date, description, source, tag, title }: TArticle) => (
+            ({ blurdataurl, byline, dataurl, date, description, duration, source, tag, title }: TArticleProps) => (
               <Article
                 key={source}
-                blurDataURL={blurdataurl}
+                blurdataurl={blurdataurl}
                 byline={byline}
                 date={date * 1}
-                dataURL={dataurl}
+                dataurl={dataurl}
                 description={description}
+                duration={duration}
                 source={source}
                 tag={tag}
                 title={title}

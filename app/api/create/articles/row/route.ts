@@ -39,6 +39,7 @@ export async function GET(request: NextRequest) {
     const youtube = await getYouTubeData(url);
     if (youtube) {
       metadata.byline = youtube.byline;
+      metadata.duration = youtube.duration;
       metadata.keywords = [...metadata.keywords, ...youtube.keywords];
       metadata.tag = youtube.tag;
     }

@@ -1,14 +1,16 @@
 'use client';
 
 import { updateArticle } from '@/lib/articles';
+import { getDurationFromMs } from '@/lib/duration';
 import Image from 'next/image';
 
-type TArticleProps = {
-  blurDataURL: string;
+export type TArticleProps = {
+  blurdataurl: string;
   byline: string;
-  dataURL: string;
+  dataurl: string;
   date: number;
   description: string;
+  duration: number;
   source: string;
   tag: string;
   title: string;
@@ -23,22 +25,24 @@ type TArticleProps = {
  * or help the user find intriguing articles faster.
  *
  * @param {Object} props The props object containing article data.
- * @param {string} props.blurDataURL The base64-encoded blur data URL for the article image.
+ * @param {string} props.blurdataurl The base64-encoded blur data URL for the article image.
  * @param {string} props.byline The author or creator of the article.
- * @param {string} props.dataURL The URL of the article image.
+ * @param {string} props.dataurl The URL of the article image.
  * @param {number} props.date The timestamp of the article publication date.
  * @param {string} props.description The brief description of the article content.
+ * @param {number} props.duration Ms to consume article content.
  * @param {string} props.source The source URL of the article.
  * @param {string} props.tag The tag or category of the article.
  * @param {string} props.title The title of the article.
  * @returns {JSX.Element} The JSX element representing the article item.
  */
 export default function Article({
-  blurDataURL,
+  blurdataurl,
   byline,
-  dataURL,
+  dataurl,
   date,
   description,
+  duration,
   source,
   tag,
   title,
@@ -54,10 +58,10 @@ export default function Article({
         <Image
           alt={source}
           aria-hidden={true}
-          blurDataURL={blurDataURL}
+          blurDataURL={blurdataurl}
           fill
           placeholder='blur'
-          src={dataURL}
+          src={dataurl}
           sizes='1200px'
         />
         {tag && (
@@ -68,15 +72,22 @@ export default function Article({
         )}
       </div>
       <div className='flex flex-col m-auto p-4 z-10 text-left rounded data'>
-        <span className='sr-only'>Click here to view content as provided by </span>
-        <i className='text-sm truncate leading-6'>
-          {byline} -{' '}
+        <div className='text-sm truncate leading-6 gap-x-1 flex flex-row flex-wrap'>
+          <address>
+            <span className='sr-only'>Click here to view content as provided by</span>
+            {byline}
+          </address>
           <time dateTime={new Date(date).toISOString()}>
-            {new Date(date).toLocaleDateString()} {new Date(date).toLocaleTimeString()}
+            {new Date(date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}{' '}
+            {new Date(date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
           </time>
-        </i>
-        <span className='sr-only'>and titled as </span>
-        <p className='font-bold leading-6'>{title}</p>
+          <span className='sr-only'>duration</span>
+          {getDurationFromMs(duration)}
+        </div>
+        <p className='font-bold leading-6'>
+          <span className='sr-only'>titled as</span>
+          {title}
+        </p>
         <small className='leading-6'>{description}</small>
       </div>
     </button>
