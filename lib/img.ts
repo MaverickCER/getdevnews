@@ -119,7 +119,9 @@ async function getPixelDimensions(image: Sharp, buffer: Buffer): Promise<PixelDi
 async function getOptimizedBuffer(url: string, width: number, height: number): Promise<Buffer | null> {
   try {
     if (!url) return null;
-    const ArrayBuffer = await (await fetch(url)).arrayBuffer();
+    const ArrayBuffer = await (await fetch(url, {
+      cache: 'no-store', next: { revalidate: 0 }, 
+    })).arrayBuffer();
     const buffer = Buffer.from(ArrayBuffer);
 
     const image: Sharp = sharp(buffer);

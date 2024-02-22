@@ -9,7 +9,9 @@
 export async function getVisitors() {
   try {
     const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
-    const response = await fetch(`${baseUrl}/api/read/visitors`).then((res) => { try { return res.json() } catch { return res }});
+    const response = await fetch(`${baseUrl}/api/read/visitors`, {
+      cache: 'no-store', next: { revalidate: 0 }, 
+    }).then((res) => { try { return res.json() } catch { return res }});
     return response.result.rows[0].count || 0;
   } catch (error) {
     console.error(`getVisitors encountered error`, error);
@@ -31,15 +33,16 @@ export async function getVisitors() {
  */
 export async function updateVisitors() {
   try {
+    if (process.env.NODE_ENV === 'development') return;
     const lastVisit = parseInt(localStorage.getItem('lastVisit') || '0');
     const now = Date.now();
-    if (!lastVisit || lastVisit > now - 24 * 60 * 1000) {
-      localStorage.setItem('lastVisit', `${now}`);
-      const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
-      const response = await fetch(`${baseUrl}/api/update/visitors`);
-      console.error(response);
-    }
+    if (lastVisit > now - 24 * 60 * 1000) return;
+    localStorage.setItem('lastVisit', `${now}`);
+    const baseUrl = 'https://www.getdevnews.com';
+    await fetch(`${baseUrl}/api/create/visitors/row`, { cache: 'no-store', next: { revalidate: 0 } });
+    return;
   } catch (error) {
     console.error(`updateVisitors encountered error`, error);
+    return;
   }
 }
