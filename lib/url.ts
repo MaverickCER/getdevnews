@@ -15,7 +15,7 @@ export async function getMetaData(url: string) {
   try {
     // Fetch the HTML content of the URL
     const response = await fetch(url, {
-      cache: 'no-store', next: { revalidate: 0 }, 
+      cache: 'no-store', 
     });
     const html = await response.text();
 

@@ -75,7 +75,7 @@ export async function POST(request: NextRequest, response: NextResponse) {
         // send video link to creation endpoint so it can be added to the site
         const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
         const response = fetch(`${baseUrl}/api/create/articles?url=${videoLink}`, {
-          cache: 'no-store', next: { revalidate: 0 }, 
+          cache: 'no-store', 
         }).then((res) => res.json());
 
         console.log(`webhook/youtube response`, response);

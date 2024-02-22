@@ -8,7 +8,7 @@ export async function getArticles() {
   try {
     const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
     const response = await fetch(`${baseUrl}/api/read/articles`, {
-      cache: 'no-store', next: { revalidate: 0 }, 
+      cache: 'no-store', 
     }).then((res) => res.json());
     if (!response || !response.result || !Array.isArray(response.result.rows)) return [];
     return response.result.rows;
@@ -31,7 +31,7 @@ export async function updateArticle(source: string) {
     if (!record) {
       localStorage.setItem(source, '1');
       const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
-      await fetch(`${baseUrl}/api/update/articles?visits=1`, { cache: 'no-store', next: { revalidate: 0 } });
+      await fetch(`${baseUrl}/api/update/articles?visits=1`, { cache: 'no-store', });
     }
   } catch (error) {
     console.error(`handleClick encountered error`, error);

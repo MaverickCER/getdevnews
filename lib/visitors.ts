@@ -10,7 +10,7 @@ export async function getVisitors() {
   try {
     const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
     const response = await fetch(`${baseUrl}/api/read/visitors`, {
-      cache: 'no-store', next: { revalidate: 0 }, 
+      cache: 'no-store', 
     }).then((res) => { try { return res.json() } catch { return res }});
     return response.result.rows[0].count || 0;
   } catch (error) {
@@ -39,7 +39,7 @@ export async function updateVisitors() {
     if (lastVisit > now - 24 * 60 * 1000) return;
     localStorage.setItem('lastVisit', `${now}`);
     const baseUrl = 'https://www.getdevnews.com';
-    await fetch(`${baseUrl}/api/create/visitors/row`, { cache: 'no-store', next: { revalidate: 0 } });
+    await fetch(`${baseUrl}/api/create/visitors/row`, { cache: 'no-store', });
     return;
   } catch (error) {
     console.error(`updateVisitors encountered error`, error);

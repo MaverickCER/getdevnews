@@ -120,7 +120,7 @@ async function getOptimizedBuffer(url: string, width: number, height: number): P
   try {
     if (!url) return null;
     const ArrayBuffer = await (await fetch(url, {
-      cache: 'no-store', next: { revalidate: 0 }, 
+      cache: 'no-store', 
     })).arrayBuffer();
     const buffer = Buffer.from(ArrayBuffer);
 
