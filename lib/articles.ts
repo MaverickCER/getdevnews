@@ -6,7 +6,7 @@
  */
 export async function getArticles() {
   try {
-    const baseUrl = process.env.VERCEL_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
+    const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
     const response = await fetch(`${baseUrl}/api/read/articles`, {
       next: { revalidate: 60 },
     }).then((res) => res.json());
@@ -22,8 +22,7 @@ export async function getArticles() {
  * Asynchronous function to update articles whenever a user visits them. User
  * visits should only count once per user per day.
  * 
- * @returns {Promise<Array<Object>>} A promise that resolves to an array of 
- * article objects fetched from the server.
+ * @returns {void};
  */
 export async function updateArticle(source: string) {
   try {
@@ -31,7 +30,7 @@ export async function updateArticle(source: string) {
     const record = localStorage.getItem(source);
     if (!record) {
       localStorage.setItem(source, '1');
-      const baseUrl = process.env.VERCEL_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
+      const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
       await fetch(`${baseUrl}/api/update/articles?visits=1`);
     }
   } catch (error) {

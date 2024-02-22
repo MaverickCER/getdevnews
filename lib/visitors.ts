@@ -8,9 +8,9 @@
  */
 export async function getVisitors() {
   try {
-    const baseUrl = process.env.VERCEL_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
+    const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
     const response = await fetch(`${baseUrl}/api/read/visitors`).then((res) => { try { return res.json() } catch { return res }});
-    return response.visitors;
+    return response.result.rows[0].count || 0;
   } catch (error) {
     console.error(`getVisitors encountered error`, error);
     return 0;
@@ -35,7 +35,7 @@ export async function updateVisitors() {
     const now = Date.now();
     if (!lastVisit || lastVisit > now - 24 * 60 * 1000) {
       localStorage.setItem('lastVisit', `${now}`);
-      const baseUrl = process.env.VERCEL_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
+      const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
       const response = await fetch(`${baseUrl}/api/update/visitors`);
       console.error(response);
     }
