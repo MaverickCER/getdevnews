@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
  * @param {NextRequest} request The incoming request object.
  * @returns {NextResponse} The response indicating acknowledgement of the event.
  */
-export async function POST(request: NextRequest, response: NextResponse) {
+export async function POST(request: NextRequest) {
   let respond = true;
   try {
     if (!request.body) throw new Error('');
