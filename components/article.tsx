@@ -14,6 +14,7 @@ export type TArticleProps = {
   source: string;
   tag: string;
   title: string;
+  visits: number;
 };
 
 /**
@@ -46,7 +47,10 @@ export default function Article({
   source,
   tag,
   title,
+  visits,
 }: TArticleProps) {
+  const timestamp = getDurationFromMs(duration);
+
   return (
     <button
       onClick={() => updateArticle(source)}
@@ -72,23 +76,20 @@ export default function Article({
         )}
       </div>
       <div className='flex flex-col m-auto p-4 z-10 text-left rounded data'>
-        <div className='text-sm truncate leading-6 gap-x-1 flex flex-row flex-wrap'>
-          <address>
-            <span className='sr-only'>Click here to view content as provided by</span>
-            {byline}
-          </address>
-          <time dateTime={new Date(date).toISOString()}>
-            {new Date(date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}{' '}
-            {new Date(date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
-          </time>
-          <span className='sr-only'>duration</span>
-          {getDurationFromMs(duration)}
-        </div>
         <p className='font-bold leading-6'>
           <span className='sr-only'>titled as</span>
           {title}
         </p>
         <small className='leading-6'>{description}</small>
+        <div className='text-sm truncate leading-6 gap-x-1 flex flex-row flex-wrap'>
+          <address>{byline}</address>
+          <time dateTime={new Date(date).toISOString()}>
+            {new Date(date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}{' '}
+            {new Date(date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+          </time>
+          {timestamp && <span aria-label='duration'>{timestamp}</span>}
+          {Boolean(visits) && <span aria-label='visits'>{visits}</span>}
+        </div>
       </div>
     </button>
   );

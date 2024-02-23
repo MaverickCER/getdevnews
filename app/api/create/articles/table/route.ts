@@ -29,7 +29,8 @@ export async function GET(request: NextRequest) {
         keywords TEXT[],
         source TEXT UNIQUE,
         tag TEXT,
-        title TEXT
+        title TEXT,
+        visits BIGINT
       );
     `;
 
