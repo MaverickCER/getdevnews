@@ -33,7 +33,7 @@ export async function POST(request: NextRequest) {
     if (!request.body) throw new Error('');
     const signatures = request.headers.get('x-hub-signature') || '';
     const signature = Array.isArray(signatures) ? signatures.join('') : '';
-    const hmac = crypto.createHmac('sha256', process.env.YOUTUBE_API_SECRET || '');
+    const hmac = crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '');
     const reader = await request.body.getReader();
     const values = [];
 
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
     console.log(`webhook/youtube payload`, payload);
     console.log(`webhook/youtube request`, request);
     hmac.update(payload);
-    const expectedSignature = 'sha256=' + hmac.digest('hex');
+    const expectedSignature = 'sha1=' + hmac.digest('hex');
     console.log(`webhook/youtube signatures`, {expectedSignature, signature, signatures});
     const isValidSignature = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     if (isValidSignature) {
