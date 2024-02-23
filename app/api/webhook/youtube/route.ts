@@ -55,8 +55,10 @@ export async function POST(request: NextRequest, response: NextResponse) {
 
     const payload = values.join('');
     console.log(`webhook/youtube payload`, payload);
+    console.log(`webhook/youtube request`, request);
     hmac.update(payload);
     const expectedSignature = 'sha256=' + hmac.digest('hex');
+    console.log(`webhook/youtube signatures`, {expectedSignature, signature, signatures});
     const isValidSignature = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     if (isValidSignature) {
       NextResponse.json({ message: 'Update Recieved' }, { status: 200 });
