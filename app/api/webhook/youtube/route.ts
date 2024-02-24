@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse, userAgent } from 'next/server';
 import { parseString } from 'xml2js';
 import crypto from 'crypto';
-import { NextApiRequest, NextApiResponse } from 'next';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(decodeURI(request.url));
@@ -31,8 +30,7 @@ export async function POST(request: NextRequest) {
   let respond = true;
   try {
     if (!request.body) throw new Error('');
-    const signatures = request.headers.get('x-hub-signature') || '';
-    const signature = Array.isArray(signatures) ? signatures.join('') : '';
+    const signature = request.headers.get('x-hub-signature') || '';
     const hmac = crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '');
     const reader = await request.body.getReader();
     const values = [];
@@ -55,13 +53,10 @@ export async function POST(request: NextRequest) {
 
     const payload = values.join('');
     console.log(`webhook/youtube payload`, payload);
-    console.log(`webhook/youtube request`, request);
     hmac.update(payload);
     const expectedSignature = 'sha1=' + hmac.digest('hex');
-    console.log(`webhook/youtube signatures`, {expectedSignature, signature, signatures});
     const isValidSignature = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
     if (isValidSignature) {
-      NextResponse.json({ message: 'Update Recieved' }, { status: 200 });
       respond = false;
       parseString(payload || '', (error, result) => {
         if (error) {
@@ -82,22 +77,23 @@ export async function POST(request: NextRequest) {
 
         console.log(`webhook/youtube response`, response);
       });
+      return NextResponse.json({ message: 'Update Recieved' }, { status: 200 });
     } else {
-      NextResponse.json({ message: 'Invalid Signature' }, { status: 400 });
       respond = false;
       const ip = request.ip;
       const { isBot, device } = userAgent(request);
       console.error(`webhook/youtube unauthorized access`, { device, ip, isBot });
+      return NextResponse.json({ message: 'Invalid Signature' }, { status: 400 });
     }
   } catch (error) {
     console.error(`webhook/youtube encountered error`, error);
     if (respond) {
-      NextResponse.json({ error }, { status: 500 });
       respond = false;
+      return NextResponse.json({ error }, { status: 500 });
     }
   } finally {
     if (respond) {
-      NextResponse.json({ message: 'Invalid Data Stream' }, { status: 400 });
+      return NextResponse.json({ message: 'Invalid Data Stream' }, { status: 400 });
     }
   }
 }
