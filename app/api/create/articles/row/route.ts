@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
     const url = decodeURIComponent(searchParams.get('url') || '');
     const isAd = searchParams.get('ad') === 'true';
     if (!url) throw new Error(`Invalid Url: ${url}`);
-    console.log(`create/articles/row called for ${isAd ? ' Ad' : ''} URL ${url}`);
+    console.log(`create/articles/row called for${isAd ? ' Ad' : ''} URL ${url}`);
 
     const metadata = await getMetaData(url);
     if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
