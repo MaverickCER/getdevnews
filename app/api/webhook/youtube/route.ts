@@ -1,7 +1,21 @@
-import { NextRequest, NextResponse, userAgent } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
+import { revalidateTag } from 'next/cache';
+import { sql } from '@vercel/postgres';
 import { parseString } from 'xml2js';
 import crypto from 'crypto';
+import { getMetaData } from '@/lib/url';
 
+/**
+ * Example: http://localhost:3000/api/webhook/youtube?hub.challenge=challenge_code
+ * Endpoint for handling verification challenges from YouTube Webhook subscriptions.
+ * This endpoint is used to verify subscriptions to YouTube channel updates using
+ * the PubSubHubbub protocol. It expects a 'hub.challenge' query parameter 
+ * containing the challenge code provided by YouTube. Upon receiving the challenge,
+ * it returns the same code to verify the subscription.
+ * 
+ * @param {NextRequest} request The incoming request object containing the verification challenge.
+ * @returns {NextResponse} The response containing the verification challenge or a default message if none provided.
+ */
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(decodeURI(request.url));
   const hub_challenge = searchParams.get('hub.challenge') || "no challenge";
@@ -27,14 +41,10 @@ export async function GET(request: NextRequest) {
  * @returns {NextResponse} The response indicating acknowledgement of the event.
  */
 export async function POST(request: NextRequest) {
-  let respond = true;
   try {
-    if (!request.body) throw new Error('');
-    const signature = request.headers.get('x-hub-signature') || '';
-    const hmac = crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '');
+    if (!request.body) throw new Error('Invalid POST Request');
     const reader = await request.body.getReader();
     const values = [];
-
     while (true) {
       const { done, value } = await reader.read();
 
@@ -53,47 +63,38 @@ export async function POST(request: NextRequest) {
 
     const payload = values.join('');
     console.log(`webhook/youtube payload`, payload);
-    hmac.update(payload);
-    const expectedSignature = 'sha1=' + hmac.digest('hex');
-    const isValidSignature = crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
-    if (isValidSignature) {
-      respond = false;
-      parseString(payload || '', (error, result) => {
-        if (error) {
-          console.error(`api/webhook/youtube encountered parsing error`, error.stack);
-          return;
-        }
 
-        const videoLink = encodeURIComponent(result.feed.entry[0].link[0].$.href);
-        if (!videoLink) return;
+    // validate signature - throws error if not equal
+    const signature = request.headers.get('x-hub-signature') || '';
+    const expectedSignature = crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '').update(payload).digest('hex');
+    crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 
-        console.log(`webhook/youtube videoLink ${videoLink}`);
+    // parse video link
+    parseString(payload || '', async (error, result) => {
+      if (error) {
+        console.error(`api/webhook/youtube encountered parsing error`, error);
+        return;
+      }
 
-        // send video link to creation endpoint so it can be added to the site
-        const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
-        const response = fetch(`${baseUrl}/api/create/articles?url=${videoLink}`, {
-          cache: 'no-store', 
-        }).then((res) => res.json());
+      const url = encodeURI(result.feed.entry[0].link[0].$.href);
+      const metadata = await getMetaData(url);
+      if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
 
-        console.log(`webhook/youtube response`, response);
-      });
-      return NextResponse.json({ message: 'Update Recieved' }, { status: 200 });
-    } else {
-      respond = false;
-      const ip = request.ip;
-      const { isBot, device } = userAgent(request);
-      console.error(`webhook/youtube unauthorized access`, { device, ip, isBot });
-      return NextResponse.json({ message: 'Invalid Signature' }, { status: 400 });
-    }
+      console.log(`webhook/youtube processing metadata for ${url}`, metadata);
+      const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+
+      const articles = await sql`
+        INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
+        VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+      `;
+
+      console.log(`webhook/youtube result for ${url}`, articles);
+
+      revalidateTag('/');
+    });
   } catch (error) {
     console.error(`webhook/youtube encountered error`, error);
-    if (respond) {
-      respond = false;
-      return NextResponse.json({ error }, { status: 500 });
-    }
   } finally {
-    if (respond) {
-      return NextResponse.json({ message: 'Invalid Data Stream' }, { status: 400 });
-    }
+    return NextResponse.json({ message: 'acknowledged' }, { status: 200 });
   }
 }
