@@ -24,15 +24,30 @@ export async function getArticles() {
  * 
  * @returns {void};
  */
-export async function updateArticle(source: string) {
+export async function updateVisits(source: string) {
   try {
     window.open(source, '_blank');
     const record = localStorage.getItem(source);
     if (!record) {
       localStorage.setItem(source, '1');
       const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
-      await fetch(`${baseUrl}/api/update/articles?source=${source}`, { cache: 'no-store', });
+      await fetch(`${baseUrl}/api/update/articles/visits?source=${source}`, { cache: 'no-store', });
     }
+  } catch (error) {
+    console.error(`handleClick encountered error`, error);
+  }
+}
+
+/**
+ * Asynchronous function to update articles whenever a user vies them. User
+ * views should .
+ * 
+ * @returns {void};
+ */
+export async function updateViews(source: string) {
+  try {
+    const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
+    await fetch(`${baseUrl}/api/update/articles/views?source=${source}`, { cache: 'no-store', });
   } catch (error) {
     console.error(`handleClick encountered error`, error);
   }
