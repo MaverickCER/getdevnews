@@ -1,5 +1,5 @@
 {
-  "name": "getDevNews",
+  "name": "get-dev-news",
   "version": "0.1.0",
   "private": false,
   "scripts": {
