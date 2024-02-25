@@ -45,7 +45,8 @@ export async function getMetaData(url: string) {
     const metaKeywords = (tempDiv.querySelector('meta[name="keywords"]')?.getAttribute('content') || '').replace(/[^a-zA-Z0-9!#$%^&*()<>?.=\[\]{}\\|'`~]/g, ',').split(',') || [];
     const titleKeywords = title.replace(/[^a-zA-Z0-9!#$%^&*()<>?.=\[\]{}\\|'`~]/g, ' ').split(' ') || [];
     const descriptionKeywords = description.replace(/[^a-zA-Z0-9!#$%^&*()<>?.=\[\]{}\\|'`~]/g, ' ').split(' ') || [];
-    const keywords = [...descriptionKeywords, ...titleKeywords, ...metaKeywords].map((v) => v.toLowerCase().trim()).filter((v, i, a) => v && a.indexOf(v) === i);
+    const fillerWords = ["the", "and", "or", "but", "is", "are", "was", "were", "of", "to", "in", "on", "at"];
+    const keywords = [...descriptionKeywords, ...titleKeywords, ...metaKeywords].map((v) => v.toLowerCase().trim().replace(/[^\w\s]|_/g, '')).filter((v, i, a) => v && a.indexOf(v) === i && !fillerWords.includes(v));
 
     if (!blurDataURL || !byline || !dataURL || !description || !source || !title) return null;
 

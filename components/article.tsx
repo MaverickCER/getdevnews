@@ -13,6 +13,7 @@ export type TArticleProps = {
   date: number;
   description: string;
   duration: number;
+  keywords: string[];
   source: string;
   tag: string;
   title: string;
@@ -38,6 +39,8 @@ export type TArticleProps = {
  * @param {string} props.source The source URL of the article.
  * @param {string} props.tag The tag or category of the article.
  * @param {string} props.title The title of the article.
+ * @param {number} props.views The number of times this article has been viewed.
+ * @param {number} props.visits The number of times this article has been clicked.
  * @returns {JSX.Element} The JSX element representing the article item.
  */
 export default function Article({
@@ -47,6 +50,7 @@ export default function Article({
   date,
   description,
   duration,
+  keywords,
   source,
   tag,
   title,
@@ -60,7 +64,7 @@ export default function Article({
   return (
     <button
       ref={ref}
-      onClick={() => updateVisits(source)}
+      onClick={() => updateVisits(source, tag === 'ad', keywords)}
       data-intersecting={isIntersecting}
       data-views={views}
       className='flex flex-col flex-grow flex-shrink w-1/4 pb-4 rounded border-none min-w max-w'>

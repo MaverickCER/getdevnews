@@ -17,7 +17,7 @@ export default async function Home() {
           <Skeleton count={10} />
         ) : (
           articles.map(
-            ({ blurdataurl, byline, dataurl, date, description, duration, source, tag, title, views, visits }: TArticleProps) => (
+            ({ blurdataurl, byline, dataurl, date, description, duration, keywords, source, tag, title, views, visits }: TArticleProps) => (
               <Article
                 key={source}
                 blurdataurl={blurdataurl}
@@ -26,6 +26,7 @@ export default async function Home() {
                 dataurl={dataurl}
                 description={description}
                 duration={duration}
+                keywords={keywords}
                 source={source}
                 tag={tag}
                 title={title}

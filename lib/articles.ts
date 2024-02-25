@@ -24,9 +24,19 @@ export async function getArticles() {
  * 
  * @returns {void};
  */
-export async function updateVisits(source: string) {
+export async function updateVisits(source: string, isAd: boolean, keywords: string[]) {
   try {
-    window.open(source, '_blank');
+    const url = [
+      source,
+      '?',
+      `&utm_medium=${isAd ? 'paid' : 'free'}`,
+      `&utm_source=getdevnews`,
+      `&utm_campaign=getdevnews`,
+      `&utm_content=ogimage-title-description`,
+      `&utm_term=${keywords.join('+')}`
+    ].join('');
+    console.error(url);
+    window.open(url, '_blank');
     const record = localStorage.getItem(source);
     if (!record) {
       localStorage.setItem(source, '1');
