@@ -26,43 +26,53 @@ import { revalidatePath } from 'next/cache';
  * an error message.
  */
 export async function GET(request: NextRequest) {
+  const sources = [];
   try {
     const { searchParams } = new URL(request.url);
-    const url = decodeURIComponent(searchParams.get('url') || '');
+    const urls = decodeURIComponent(searchParams.get('url') || '').split(',');
     const isAd = searchParams.get('ad') === 'true';
-    if (!url) throw new Error(`Invalid Url: ${url}`);
-    console.log(`create/articles/row called for${isAd ? ' Ad' : ''} URL ${url}`);
+    if (urls.length === 0) throw new Error(`Invalid urls: ${urls}`);
+    console.log(`create/articles/row called for${isAd ? ' Ad' : ''} urls ${urls.join(', ')}`);
 
-    const metadata = await getMetaData(url);
-    if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
+    for await (const url of urls) {
+      try {
+        const metadata = await getMetaData(url);
+        if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
+    
+        const youtube = await getYouTubeData(url);
+        if (youtube) {
+          metadata.byline = youtube.byline;
+          metadata.duration = youtube.duration;
+          metadata.keywords = [...metadata.keywords, ...youtube.keywords];
+          metadata.tag = youtube.tag;
+        }
+    
+        if (isAd) {
+          metadata.tag = 'ad';
+        }
+    
+        console.log(`create/articles/row processing metadata for ${url}`, metadata);
+        const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+    
+        const articles = await sql`
+          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
+          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+        `;
+    
+        console.log(`create/articles/row result for ${url}`, articles);
 
-    const youtube = await getYouTubeData(url);
-    if (youtube) {
-      metadata.byline = youtube.byline;
-      metadata.duration = youtube.duration;
-      metadata.keywords = [...metadata.keywords, ...youtube.keywords];
-      metadata.tag = youtube.tag;
+        if (articles.oid) {
+          sources.push(source);
+        }
+      } catch (error) {
+        console.error(`create/articles/row encountered error for ${url} of urls`, error);
+      }
     }
-
-    if (isAd) {
-      metadata.tag = 'ad';
-    }
-
-    console.log(`create/articles/row processing metadata for ${url}`, metadata);
-    const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
-
-    const articles = await sql`
-      INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
-      VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
-    `;
-
-    console.log(`create/articles/row result for ${url}`, articles);
     
     revalidatePath('/');
-
-    return NextResponse.json({ articles }, { status: 200 });
   } catch (error) {
     console.error(`create/articles/row encountered error`, error);
-    return NextResponse.json({ error }, { status: 500 });
+  } finally {
+    return NextResponse.json({ articles: sources.length }, { status: 200 });
   }
 }

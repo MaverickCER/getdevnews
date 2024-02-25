@@ -23,39 +23,45 @@ export async function GET(request: NextRequest) {
   const links = [];
   try {
     const { searchParams } = new URL(request.url);
-    const url = decodeURIComponent(searchParams.get('url') || '');
+    const urls = decodeURIComponent(searchParams.get('url') || '').split(',');
     const isAd = searchParams.get('ad') === 'true';
-    if (!url) throw new Error(`Invalid Url: ${url}`);
-    console.log(`create/articles/rss called for${isAd ? ' Ad' : ''} URL ${url}`);
+    if (urls.length === 0) throw new Error(`Invalid urls: ${urls}`);
+    console.log(`create/articles/rss called for${isAd ? ' Ad' : ''} urls ${urls}`);
 
-    const feed = await new Parser().parseURL(url);
-
-    for await (const item of feed.items) {
+    for await (const url of urls) {
       try {
-        const published = Date.parse(item.pubDate || item.published || new Date());
-        if (published < Date.now() - 24 * 60 * 60 * 1000) continue;
-        const metadata = await getMetaData(item.link || '');
-        if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid item link: ${item.link} - ${JSON.stringify(metadata)}`);
-
-        if (isAd) {
-          metadata.tag = 'ad';
-        }
-
-        console.log(`create/articles/rss processing metadata for ${item.link} of ${url}`, metadata);
-        const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
-
-        const articles = await sql`
-          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
-          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
-        `;
-
-        console.log(`create/articles/rss result for ${item.link} of ${url}`, articles);
-
-        if (articles.rowCount) {
-          links.push(item.link);
+        const feed = await new Parser().parseURL(url);
+    
+        for await (const item of feed.items) {
+          try {
+            const published = Date.parse(item.pubDate || item.published || new Date());
+            if (published < Date.now() - 24 * 60 * 60 * 1000) continue;
+            const metadata = await getMetaData(item.link || '');
+            if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid item link: ${item.link} - ${JSON.stringify(metadata)}`);
+    
+            if (isAd) {
+              metadata.tag = 'ad';
+            }
+    
+            console.log(`create/articles/rss processing metadata for ${item.link} of ${url}`, metadata);
+            const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+    
+            const articles = await sql`
+              INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
+              VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+            `;
+    
+            console.log(`create/articles/rss result for ${item.link} of ${url}`, articles);
+    
+            if (articles.oid) {
+              links.push(item.link);
+            }
+          } catch (error) {
+            console.error(`create/articles/rss encountered error for ${item.link} of ${url}`, error);
+          }
         }
       } catch (error) {
-        console.error(`create/articles/rss encountered error for ${item.link} of ${url}`, error);
+        console.error(`create/articles/rss encountered error for ${url} of urls`, error);
       }
     }
 
