@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
 
     const result = await sql`
       CREATE TABLE articles (
+        active: BOOLEAN DEFAULT TRUE,
         blurDataURL TEXT,
         byline TEXT,
         date BIGINT,
@@ -30,7 +31,8 @@ export async function GET(request: NextRequest) {
         source TEXT UNIQUE,
         tag TEXT,
         title TEXT,
-        visits BIGINT
+        views BIGINT DEFAULT 0,
+        visits BIGINT DEFAULT 0
       );
     `;
 
