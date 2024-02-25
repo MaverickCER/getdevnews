@@ -1,8 +1,10 @@
 'use client';
 
-import { updateArticle } from '@/lib/articles';
+import { useObserver } from '@/hooks/useObserver';
+import { updateVisits } from '@/lib/articles';
 import { getDurationFromMs } from '@/lib/duration';
 import Image from 'next/image';
+import { useRef } from 'react';
 
 export type TArticleProps = {
   blurdataurl: string;
@@ -14,6 +16,7 @@ export type TArticleProps = {
   source: string;
   tag: string;
   title: string;
+  views: number;
   visits: number;
 };
 
@@ -47,13 +50,19 @@ export default function Article({
   source,
   tag,
   title,
+  views,
   visits,
 }: TArticleProps) {
+  const ref = useRef(null);
+  const isIntersecting = useObserver(ref, source);
   const timestamp = getDurationFromMs(duration);
-
+  
   return (
     <button
-      onClick={() => updateArticle(source)}
+      ref={ref}
+      onClick={() => updateVisits(source)}
+      data-intersecting={isIntersecting}
+      data-views={views}
       className='flex flex-col flex-grow flex-shrink w-1/4 pb-4 rounded border-none min-w max-w'>
       <div
         className='relative img-wrapper rounded overflow-hidden'
@@ -76,8 +85,7 @@ export default function Article({
         )}
       </div>
       <div className='flex flex-col m-auto p-4 z-10 text-left rounded data'>
-        <p className='font-bold leading-6'>
-          <span className='sr-only'>titled as</span>
+        <p className='font-bold leading-6' aria-label='titled as'>
           {title}
         </p>
         <small className='leading-6'>{description}</small>
