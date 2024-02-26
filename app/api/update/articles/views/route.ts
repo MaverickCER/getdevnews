@@ -17,11 +17,6 @@ export async function GET(request: Request) {
     if (isBot) return NextResponse.json({ error: "bot detected" }, { status: 207 });
 
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
-    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
-      throw new Error(`Invalid key: ${key}`);
-    }
-
     const source = decodeURIComponent(searchParams.get('source') || '');
 
     console.log(`update/articles/views source ${source}`);

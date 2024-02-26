@@ -13,12 +13,6 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
-    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
-      throw new Error(`Invalid key: ${key}`);
-    }
-
     const date = Date.now() - 24 * 60 * 60 * 1000;
 
     const result = await sql`
