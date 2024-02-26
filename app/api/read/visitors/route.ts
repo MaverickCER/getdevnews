@@ -1,5 +1,5 @@
 import { sql } from '@vercel/postgres';
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
  * Example: http://localhost:3000/api/read/visitors
@@ -9,8 +9,14 @@ import { NextResponse } from 'next/server';
  * @returns {Response} The response containing the the number of visitors
  * published within the last 24 hours or an error message.
  */
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    const { searchParams } = new URL(request.url);
+    const key = searchParams.get('key');
+    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
+      throw new Error(`Invalid key: ${key}`);
+    }
+
     const date = (Date.now() - 24 * 60 * 60 * 1000) * 0;
 
     const result = await sql`

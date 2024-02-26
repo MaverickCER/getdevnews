@@ -15,9 +15,13 @@ export async function GET(request: Request) {
   try {
     const { isBot } = userAgent(request);
     if (isBot) return NextResponse.json({ error: "bot detected" }, { status: 207 });
-    if (process.env.NODE_ENV === 'development') return NextResponse.json({ error: "development" }, { status: 207 });
 
     const { searchParams } = new URL(request.url);
+    const key = searchParams.get('key');
+    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
+      throw new Error(`Invalid key: ${key}`);
+    }
+
     const source = decodeURIComponent(searchParams.get('source') || '');
 
     console.log(`update/articles/views source ${source}`);

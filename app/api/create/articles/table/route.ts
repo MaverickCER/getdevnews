@@ -12,11 +12,10 @@ import { NextRequest, NextResponse, userAgent } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    if (process.env.VERCEL_ENV !== 'development') {
-      const { isBot, device } = userAgent(request);
-      const ip = request.ip;
-      console.error(`create/articles/table unauthorized access`, { device, ip, isBot });
-      return NextResponse.json({ error: '404: This page could not be found.' }, { status: 504 });
+    const { searchParams } = new URL(request.url);
+    const key = searchParams.get('key');
+    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
+      throw new Error(`Invalid key: ${key}`);
     }
 
     const result = await sql`

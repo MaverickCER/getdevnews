@@ -12,6 +12,11 @@ import { revalidatePath } from 'next/cache';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
+    const key = searchParams.get('key');
+    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
+      throw new Error(`Invalid key: ${key}`);
+    }
+
     const path = decodeURIComponent(searchParams.get('path') || '');
 
     revalidatePath(path);

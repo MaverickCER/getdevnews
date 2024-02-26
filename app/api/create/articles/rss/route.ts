@@ -23,6 +23,11 @@ export async function GET(request: NextRequest) {
   const links = [];
   try {
     const { searchParams } = new URL(request.url);
+    const key = searchParams.get('key');
+    if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
+      throw new Error(`Invalid key: ${key}`);
+    }
+
     const urls = decodeURIComponent(searchParams.get('url') || '').split(',');
     const isAd = searchParams.get('ad') === 'true';
     if (urls.length === 0) throw new Error(`Invalid urls: ${urls}`);
