@@ -66,9 +66,7 @@ export async function POST(request: NextRequest) {
 
     // validate signature - throws error if not equal
     const signature = request.headers.get('x-hub-signature') || '';
-    const expectedSignature = crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '').update(payload).digest('hex');
-    const expectedSignature0 = crypto.createHmac('sha256', process.env.YOUTUBE_API_SECRET || '').update(payload).digest('base64');
-    console.error({signature, expectedSignature, expectedSignature0, YOUTUBE_API_SECRET: process.env.YOUTUBE_API_SECRET })
+    const expectedSignature = `sha1=${crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '').update(payload).digest('hex')}`;
     crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 
     // parse video link
