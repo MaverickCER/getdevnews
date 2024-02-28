@@ -167,10 +167,8 @@ async function getOptimizedBuffer(url: string, width: number, height: number): P
  */
 export async function getBase64(url: string, width: number, height: number): Promise<string> {
   const optimizedBuffer = await getOptimizedBuffer(url, width, height);
-  if (optimizedBuffer instanceof Buffer) {
-    return `data:image/webp;base64,${optimizedBuffer.toString('base64')}`;
-  }
-  return '';
+  if (!(optimizedBuffer instanceof Buffer)) return '';
+  return `data:image/webp;base64,${optimizedBuffer.toString('base64')}`;
 }
 
 /**
@@ -190,9 +188,12 @@ export async function getBlobURL(url: string, width: number, height: number, sou
   try {
     const optimizedBuffer = await getOptimizedBuffer(url, width, height);
     if (!(optimizedBuffer instanceof Buffer)) return '';
-    const blob = await put(`articles/${encodeURIComponent(source)}.webp`, optimizedBuffer, { access: 'public', addRandomSuffix: false });
+    return `data:image/webp;base64,${optimizedBuffer.toString('base64')}`;
 
-    return blob.url || '';
+    // Blob storage keeps pausing due to bandwidth. Changing to purly postgres storage with ssg
+    // const blob = await put(`articles/${encodeURIComponent(source)}.webp`, optimizedBuffer, { access: 'public', addRandomSuffix: false });
+
+    // return blob.url || '';
   } catch (error) {
     console.error(`getBlobURL encountered error`, error);
     return '';

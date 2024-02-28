@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     
         console.log(`create/articles/row result for ${url}`, articles);
 
-        if (articles.oid) {
+        if (articles.rowCount) {
           sources.push(source);
         }
       } catch (error) {

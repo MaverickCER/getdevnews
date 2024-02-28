@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     
             console.log(`create/articles/rss result for ${item.link} of ${url}`, articles);
     
-            if (articles.oid) {
+            if (articles.rowCount) {
               links.push(item.link);
             }
           } catch (error) {
