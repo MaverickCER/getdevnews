@@ -6,6 +6,8 @@ import Insights from '@/components/insights';
 import Skeleton from '@/components/skeleton';
 import { getArticles } from '@/lib/articles';
 
+export const dynamic = 'force-dynamic'
+
 export default async function Home() {
   const articles = await getArticles();
 

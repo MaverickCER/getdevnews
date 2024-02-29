@@ -1,6 +1,7 @@
 'use client';
 import { getVisitors, updateVisitors } from '@/lib/visitors';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 
 /**
  * React component representing the number of visitors. In addition to fetching
@@ -9,6 +10,7 @@ import { useEffect, useState } from 'react';
  * user is able to scroll down.
  */
 export default function Visitors() {
+  const router = useRouter();
   const [visitors, setVisitors] = useState(0);
 
   const handleVisitors = async () => {
@@ -16,6 +18,7 @@ export default function Visitors() {
     await updateVisitors();
     const visitors = await getVisitors();
     setVisitors(visitors);
+    router.refresh();
   };
 
   useEffect(() => {
