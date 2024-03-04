@@ -3,7 +3,7 @@ import { revalidateTag } from 'next/cache';
 import { sql } from '@vercel/postgres';
 import { parseString } from 'xml2js';
 import crypto from 'crypto';
-import { getMetaData } from '@/lib/url';
+import { getMetaData, getYouTubeData } from '@/lib/url';
 
 /**
  * Example: http://localhost:3000/api/webhook/youtube?hub.challenge=challenge_code
@@ -76,21 +76,33 @@ export async function POST(request: NextRequest) {
         return;
       }
 
-      const url = encodeURI(result.feed.entry[0].link[0].$.href);
-      const metadata = await getMetaData(url);
-      if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
+      const url = result.feed.entry[0].link[0].$.href;
+      try {
+        const metadata = await getMetaData(url);
+        if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
 
-      console.log(`webhook/youtube processing metadata for ${url}`, metadata);
-      const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+        const youtube = await getYouTubeData(url);
+        if (youtube) {
+          metadata.byline = youtube.byline;
+          metadata.duration = youtube.duration;
+          metadata.keywords = [...metadata.keywords, ...youtube.keywords];
+          metadata.tag = youtube.tag;
+        }
 
-      const articles = await sql`
-        INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
-        VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
-      `;
+        console.log(`webhook/youtube processing metadata for ${url}`, metadata);
+        const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
 
-      console.log(`webhook/youtube result for ${url}`, articles);
+        const articles = await sql`
+          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
+          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+        `;
 
-      revalidateTag('/');
+        console.log(`webhook/youtube result for ${url}`, articles);
+
+        revalidateTag('/');
+      } catch (error) {
+        console.error(`webhook/youtube encountered error for ${url}`, error);
+      }
     });
   } catch (error) {
     console.error(`webhook/youtube encountered error`, error);
