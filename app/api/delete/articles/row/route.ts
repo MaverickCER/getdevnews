@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
     for await (const url of urls) {
       try {
         const articles = await sql`
-          DELETE FROM articles WHERE source LIKE %${url}%;
+          DELETE FROM articles WHERE source LIKE ${url};
         `;
 
         console.log(`delete/articles/row result for ${url}`, articles);
