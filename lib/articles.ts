@@ -1,13 +1,14 @@
 /**
  * Asynchronous function to fetch articles from the server.
  * 
+ * @param {number} offset The number of the last article loaded in the last batch
  * @returns {Promise<Array<Object>>} A promise that resolves to an array of 
  * article objects fetched from the server.
  */
-export async function getArticles() {
+export async function getArticles(offset: number) {
   try {
     const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
-    const response = await fetch(`${baseUrl}/api/read/articles`, {
+    const response = await fetch(`${baseUrl}/api/read/articles?limit=9&offset=${offset}`, {
       cache: 'no-store', 
     }).then((res) => res.json());
     if (!response || !response.result || !Array.isArray(response.result.rows)) return [];
@@ -15,6 +16,27 @@ export async function getArticles() {
   } catch (error) {
     console.error(`getArticles encountered error`, error);
     return [];
+  }
+};
+
+/**
+ * Asynchronous function to fetch article data from the server.
+ * 
+ * @param {string} source The url of the article to be loaded
+ * @returns {Promise<Array<Object>>} A promise that resolves to an array of 
+ * article objects fetched from the server.
+ */
+export async function getArticle(source: string, dataUrl: boolean) {
+  try {
+    const baseUrl = process.env.NODE_ENV === 'development' ? 'http://localhost:3000' : 'https://www.getdevnews.com';
+    const columns = dataUrl ? 'dataurl' : 'blurdataurl, byline, date, description, duration, keywords, source, tag, title, views, visits';
+    const input = `${baseUrl}/api/read/article?source=${source}&columns=${columns}`
+    const response = await fetch(input).then((res) => res.json());
+    if (!response || !response.result || !Array.isArray(response.result.rows)) return null;
+    return response.result.rows[0];
+  } catch (error) {
+    console.error(`getArticles encountered error`, error);
+    return null;
   }
 };
 

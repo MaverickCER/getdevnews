@@ -11,11 +11,12 @@ import { MutableRefObject, useEffect, useRef, useState } from "react";
  * @returns {boolean} - Indicates whether the observed element is intersecting
  * with the viewport or its scrollable ancestor.
  */
-export const useObserver = (ref: MutableRefObject<HTMLElement | null>, source: string): boolean => {
+export const useObserver = (ref: MutableRefObject<HTMLElement | null>, source: string, blurdataurl: string): boolean => {
   const [isIntersecting, setIsIntersecting] = useState<boolean>(false);
   const intersected = useRef(false);
 
   useEffect(() => {
+    if (!blurdataurl) return;
     const current = ref?.current;
     const observer = new IntersectionObserver(
       ([entry]) => {
@@ -34,7 +35,7 @@ export const useObserver = (ref: MutableRefObject<HTMLElement | null>, source: s
         observer.unobserve(current);
       }
     };
-  }, [ref, source]);
+  }, [ref, source, blurdataurl]);
 
   return isIntersecting;
 };

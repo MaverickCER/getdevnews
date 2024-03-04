@@ -13,10 +13,19 @@ import { NextRequest, NextResponse } from 'next/server';
  */
 export async function GET(request: NextRequest) {
   try {
-    const date = Date.now() - 24 * 60 * 60 * 1000;
+    const { searchParams } = new URL(request.url);
+    const limit = parseInt(searchParams.get('limit') || '9');
+    const offset = parseInt(searchParams.get('offset') || '0');
+
+    const date = Date.now() - 48 * 60 * 60 * 1000;
 
     const result = await sql`
-      SELECT * FROM articles WHERE date > ${date} ORDER BY date DESC;
+      SELECT source
+      FROM articles
+      WHERE date > ${date}
+      ORDER BY date DESC
+      LIMIT ${limit}
+      OFFSET ${offset};
     `;
 
     console.log(`read/articles result`, result);

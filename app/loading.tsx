@@ -8,7 +8,7 @@ export default async function Loading() {
     <>
       <Header />
       <main className='flex min-h-screen max-w flex-row flex-wrap items-center justify-center p-4 gap-4 m-auto'>
-        <Skeleton count={10} />
+        <Skeleton count={9} />
       </main>
       <Footer />
     </>

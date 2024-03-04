@@ -1,6 +1,6 @@
 'use client';
 import { getVisitors, updateVisitors } from '@/lib/visitors';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 /**
@@ -10,20 +10,20 @@ import { useRouter } from 'next/navigation';
  * user is able to scroll down.
  */
 export default function Visitors() {
-  const router = useRouter();
+  const { refresh } = useRouter();
   const [visitors, setVisitors] = useState(0);
 
-  const handleVisitors = async () => {
+  const handleVisitors = useCallback(async () => {
     if (!window) return;
     await updateVisitors();
     const visitors = await getVisitors();
     setVisitors(visitors);
-    router.refresh();
-  };
+    refresh();
+  }, [refresh]);
 
   useEffect(() => {
     handleVisitors();
-  }, []);
+  }, [handleVisitors]);
 
   return visitors;
 }

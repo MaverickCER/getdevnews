@@ -1,25 +1,28 @@
-'use client';
+'use client'
 
 import { useObserver } from '@/hooks/useObserver';
-import { updateVisits } from '@/lib/articles';
+import { getArticle, updateVisits } from '@/lib/articles';
 import { getDurationFromMs } from '@/lib/duration';
 import Image from 'next/image';
-import { useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
+import Skeleton from './skeleton';
 
 export type TArticleProps = {
+  source: string;
+};
+
+type TArticleFields = {
   blurdataurl: string;
   byline: string;
-  dataurl: string;
-  date: number;
+  date: string;
   description: string;
-  duration: number;
+  duration: string;
   keywords: string[];
-  source: string;
   tag: string;
   title: string;
-  views: number;
-  visits: number;
-};
+  views: string;
+  visits: string;
+}
 
 /**
  * React component representing an article item. The aim is to display the data
@@ -30,37 +33,41 @@ export type TArticleProps = {
  * or help the user find intriguing articles faster.
  *
  * @param {Object} props The props object containing article data.
- * @param {string} props.blurdataurl The base64-encoded blur data URL for the article image.
- * @param {string} props.byline The author or creator of the article.
- * @param {string} props.dataurl The URL of the article image.
- * @param {number} props.date The timestamp of the article publication date.
- * @param {string} props.description The brief description of the article content.
- * @param {number} props.duration Ms to consume article content.
  * @param {string} props.source The source URL of the article.
- * @param {string} props.tag The tag or category of the article.
- * @param {string} props.title The title of the article.
- * @param {number} props.views The number of times this article has been viewed.
- * @param {number} props.visits The number of times this article has been clicked.
  * @returns {JSX.Element} The JSX element representing the article item.
  */
 export default function Article({
-  blurdataurl,
-  byline,
-  dataurl,
-  date,
-  description,
-  duration,
-  keywords,
-  source,
-  tag,
-  title,
-  views,
-  visits,
+  source, 
 }: TArticleProps) {
+  const [article, setArticle] = useState<TArticleFields | null>(null);
+  const [url, setUrl] = useState<string>('');
   const ref = useRef(null);
-  const isIntersecting = useObserver(ref, source);
-  const timestamp = getDurationFromMs(duration);
+  const isIntersecting = useObserver(ref, source, article ? article.blurdataurl : '');
+
+  useEffect(() => {
+    (async () => {
+      const article = await getArticle(source, false);
+      setArticle(article);
+    })()
+  }, [source]);
+
+  useEffect(() => {
+    console.error(isIntersecting, url, source);
+    if (isIntersecting && !url) {
+      const updateUrl = async () => {
+        const data = await getArticle(source, true);
+        console.error(data);
+        setUrl(data.dataurl);
+      }
+
+      updateUrl();
+    }
+  }, [isIntersecting, url, source]);
   
+  if (!article || !article.blurdataurl) return <Skeleton count={1} />;
+  const { blurdataurl, byline, date, description, duration, keywords, tag, title, views, visits, } = article;
+  const timestamp = getDurationFromMs(parseInt(duration));
+
   return (
     <button
       ref={ref}
@@ -78,8 +85,9 @@ export default function Article({
           blurDataURL={blurdataurl}
           fill
           placeholder='blur'
-          src={dataurl}
+          src={url ? url : blurdataurl}
           sizes='1200px'
+          onError={() => setUrl(blurdataurl)}
         />
         {tag && (
           <strong
@@ -95,12 +103,12 @@ export default function Article({
         <small className='leading-6'>{description}</small>
         <div className='text-sm truncate leading-6 gap-x-1 flex flex-row flex-wrap'>
           <address>{byline}</address>
-          <time dateTime={new Date(date).toISOString()}>
-            {new Date(date).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}{' '}
-            {new Date(date).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
+          <time dateTime={new Date(parseInt(date)).toISOString()}>
+            {new Date(parseInt(date)).toLocaleDateString(undefined, { month: '2-digit', day: '2-digit' })}{' '}
+            {new Date(parseInt(date)).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })}
           </time>
           {timestamp && <span aria-label='duration'>{timestamp}</span>}
-          {Boolean(visits) && <span aria-label='visits'>{visits}</span>}
+          {Boolean(parseInt(visits)) && <span aria-label='visits'>{visits}</span>}
         </div>
       </div>
     </button>
