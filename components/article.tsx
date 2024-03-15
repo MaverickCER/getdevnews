@@ -52,8 +52,8 @@ export default function Article({
   }, [source]);
 
   useEffect(() => {
-    console.error(isIntersecting, url, source);
-    if (isIntersecting && !url) {
+    const isDevelopment = process.env.NODE_ENV === 'development';
+    if (isIntersecting && !url && !isDevelopment) {
       const updateUrl = async () => {
         const data = await getArticle(source, true);
         console.error(data);
