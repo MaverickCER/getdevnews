@@ -17,12 +17,13 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '9');
     const offset = parseInt(searchParams.get('offset') || '0');
 
-    const date = Date.now() - 48 * 60 * 60 * 1000;
+    const now = Date.now();
+    const date = now - 48 * 60 * 60 * 1000;
 
     const result = await sql`
       SELECT source
       FROM articles
-      WHERE date > ${date}
+      WHERE date > ${date} AND date < ${now}
       ORDER BY date DESC
       LIMIT ${limit}
       OFFSET ${offset};
