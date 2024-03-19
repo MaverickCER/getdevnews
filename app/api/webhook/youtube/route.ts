@@ -76,46 +76,63 @@ export async function POST(request: NextRequest) {
         console.error(`api/webhook/youtube encountered parsing error`, error);
         return;
       }
+      if (!result) return;
 
-      const url = result.feed.entry[0].link[0].$.href;
+      const urls: string[] = [];
       try {
-        const metadata = await getMetaData(url);
-        if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
+        const extractUrls = (obj: any) => {
+          for (const key in obj) {
+            if (obj.hasOwnProperty(key)) {
+              if (key === '$' && obj[key].hasOwnProperty('href')) {
+                urls.push(obj[key].href);
+              } else if (typeof obj[key] === 'object') {
+                extractUrls(obj[key]);
+              }
+            }
+          }
+        };
 
-        const youtube = await getYouTubeData(url);
-        if (!youtube) throw new Error(`Invalid url ${url}`);
-        metadata.byline = youtube.byline;
-        metadata.duration = youtube.duration;
-        metadata.keywords = [...metadata.keywords, ...youtube.keywords];
-        metadata.tag = youtube.tag;
+        extractUrls(result);
 
-        const results = await sql`
-          SELECT email, expires, channel 
-          FROM youtube 
-          WHERE channel = ${youtube.channel}
-        `;
-        const result = results.rows[0];
-        if (!result) throw new Error(`Invalid channel ${youtube.channel}`);
-        if (result.expires < Date.now()) throw new Error(`Expired subscription notification for ${youtube.channel}`);
-        if (result.email) {
-          metadata.email = result.email;
-          metadata.tag = 'ad';
-        }
+        console.log(`urls:`, urls);
+        // Proceed with the rest of your code
+      } catch (error) {
+        console.error(`Error extracting urls from XML`, error);
+      }
 
-        console.log(`webhook/youtube processing metadata for ${url}`, metadata);
-        const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
+      const videos = [];
+      for await (const url of urls) {
+        try {
+          const metadata = await getMetaData(url);
+          if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
 
-        const articles = await sql`
+          const youtube = await getYouTubeData(url);
+          if (!youtube) throw new Error(`Invalid youtube link: ${url}`);
+          metadata.byline = youtube.byline;
+          metadata.duration = youtube.duration;
+          metadata.email = youtube.email;
+          metadata.keywords = [...metadata.keywords, ...youtube.keywords];
+          metadata.tag = youtube.tag;
+
+          console.log(`webhook/youtube processing metadata for ${url}`, metadata);
+          const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
+
+          const articles = await sql`
           INSERT INTO articles (blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title) 
           VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
         `;
 
-        console.log(`webhook/youtube result for ${url}`, articles);
+          console.log(`webhook/youtube result for ${url}`, articles);
 
-        revalidateTag('/');
-      } catch (error) {
-        console.error(`webhook/youtube encountered error for ${url}`, error);
+          if (articles.rowCount) {
+            videos.push(source);
+          }
+        } catch (error) {
+          console.error(`webhook/youtube encountered error for ${url} of urls`, error);
+        }
       }
+
+      console.log(`webhook/youtube processed ${urls.length} urls for ${videos.length} videos`, payload);
     });
   } catch (error) {
     console.error(`webhook/youtube encountered error`, error);
