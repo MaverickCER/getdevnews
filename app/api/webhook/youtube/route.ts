@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
 
     const payload = values.join('');
     console.log(`webhook/youtube payload`, payload);
+    NextResponse.json({ message: 'acknowledged' }, { status: 200 });
 
     // validate signature - throws error if not equal
     const signature = request.headers.get('x-hub-signature') || '';
@@ -118,7 +119,5 @@ export async function POST(request: NextRequest) {
     });
   } catch (error) {
     console.error(`webhook/youtube encountered error`, error);
-  } finally {
-    return NextResponse.json({ message: 'acknowledged' }, { status: 200 });
   }
 }
