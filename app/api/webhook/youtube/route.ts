@@ -82,19 +82,31 @@ export async function POST(request: NextRequest) {
         if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
 
         const youtube = await getYouTubeData(url);
-        if (youtube) {
-          metadata.byline = youtube.byline;
-          metadata.duration = youtube.duration;
-          metadata.keywords = [...metadata.keywords, ...youtube.keywords];
-          metadata.tag = youtube.tag;
+        if (!youtube) throw new Error(`Invalid url ${url}`);
+        metadata.byline = youtube.byline;
+        metadata.duration = youtube.duration;
+        metadata.keywords = [...metadata.keywords, ...youtube.keywords];
+        metadata.tag = youtube.tag;
+
+        const results = await sql`
+          SELECT email, expires, channel 
+          FROM youtube 
+          WHERE channel = ${youtube.channel}
+        `;
+        const result = results.rows[0];
+        if (!result) throw new Error(`Invalid channel ${youtube.channel}`);
+        if (result.expires < Date.now()) throw new Error(`Expired subscription notification for ${youtube.channel}`);
+        if (result.email) {
+          metadata.email = result.email;
+          metadata.tag = 'ad';
         }
 
         console.log(`webhook/youtube processing metadata for ${url}`, metadata);
-        const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+        const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
 
         const articles = await sql`
-          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
-          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title) 
+          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
         `;
 
         console.log(`webhook/youtube result for ${url}`, articles);
