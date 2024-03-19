@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
     const username = decodeURIComponent(searchParams.get('username') || '');
     if (!username) throw new Error(`!username`);
 
-    const isAd = searchParams.get('ad') === 'true';
+    const emailParam = searchParams.get('email') || '';
     const url = `https://twitter.com/${username}/status/${id}`;
-    console.log(`create/articles/row called for${isAd ? ' Ad' : ''} URL ${url}`);
+    console.log(`create/articles/row called for${emailParam ? ` ${emailParam}` : ''} URL ${url}`);
 
     const metadata = {
       blurDataURL: `data:image/webp;base64,UklGRqYAAABXRUJQVlA4IJoAAACQAwCdASoSAAoAPm0qkUWkIqGYBABABsSgAD4hG1FUWvyTKHAAAP79YPoLfDIpv9TX/ogTVmREI8Sv4zX8NsQPy1esqk/75c3H/xoXs4kC4kg0EkmTB1UXnuvQk/WQ4crqf6//0jTAE9E5fhSP/3YuV/WA7fBqNA//5cqf/D/Y/+fW+RBPLoCuSW2oymbMX71TAjsDFWF5TgAA`,
@@ -46,18 +46,19 @@ export async function GET(request: NextRequest) {
       date: Date.parse(created_at),
       description: text.length > 160 ? text?.substring(0, 160) + '...' : text,
       duration: 0,
+      email: emailParam,
       keywords: text.replace(/[^a-zA-Z0-9!#$%^&*()<>?.=\[\]{}\\|'`~]/g, ','),
       source: url,
-      tag: isAd ? 'ad' : '',
+      tag: emailParam ? 'ad' : '',
       title: `${username} on X:`,
     }
 
     console.log(`create/articles/row processing metadata for ${url}`, metadata);
-    const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+    const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
 
     const articles = await sql`
-      INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
-      VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords}}`}, ${source}, ${tag}, ${title});
+      INSERT INTO articles (blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title) 
+      VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords}}`}, ${source}, ${tag}, ${title});
     `;
 
     console.log(`create/articles/row result for ${url}`, articles);

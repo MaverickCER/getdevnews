@@ -35,9 +35,9 @@ export async function GET(request: NextRequest) {
     }
 
     const urls = decodeURIComponent(searchParams.get('url') || '').split(',');
-    const isAd = searchParams.get('ad') === 'true';
+    const emailParam = searchParams.get('email') || '';
     if (urls.length === 0) throw new Error(`Invalid urls: ${urls}`);
-    console.log(`create/articles/row called for${isAd ? ' Ad' : ''} urls ${urls.join(', ')}`);
+    console.log(`create/articles/row called for${emailParam ? ` ${emailParam}` : ''} urls ${urls.join(', ')}`);
 
     for await (const url of urls) {
       try {
@@ -52,16 +52,17 @@ export async function GET(request: NextRequest) {
           metadata.tag = youtube.tag;
         }
     
-        if (isAd) {
+        if (emailParam) {
           metadata.tag = 'ad';
+          metadata.email = emailParam;
         }
     
         console.log(`create/articles/row processing metadata for ${url}`, metadata);
-        const { blurDataURL, byline, dataURL, date, description, keywords, source, tag, title } = metadata;
+        const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
     
         const articles = await sql`
-          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, keywords, source, tag, title) 
-          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title) 
+          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
         `;
     
         console.log(`create/articles/row result for ${url}`, articles);

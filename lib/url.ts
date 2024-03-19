@@ -106,6 +106,7 @@ export async function getYouTubeData(url: string) {
     const isShort = duration < 5 * 60 * 1000;
     return {
       byline: video.snippet.channelTitle || 'YouTube',
+      channel: video.snippet.channelId || '',
       duration,
       keywords: video.snippet.tags || [],
       tag: isLive ? 'live' : isShort ? 'short' : ''
