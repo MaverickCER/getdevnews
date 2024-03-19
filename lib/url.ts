@@ -1,3 +1,4 @@
+import { sql } from '@vercel/postgres';
 import { getBase64, getBlobURL } from '@/lib/img';
 import { google } from 'googleapis'
 import { getDurationFromPT } from './duration';
@@ -20,11 +21,15 @@ export async function getMetaData(url: string) {
     });
     const html = await response.text();
 
+    console.log(`url.getMetaData html: ${html}`);
+
     // Create a temporary div element to hold the HTML content
     const { JSDOM } = require('jsdom');
     const dom = new JSDOM(html);
     const tempDiv = dom.window.document.createElement('div');
     tempDiv.innerHTML = html;
+
+    console.log(`url.getMetaData innerHTML: ${tempDiv.innerHTML}`);
 
     // Extract metadata elements such as title, description, etc.
     const innerTitle = tempDiv.querySelector('title')?.innerText || '';
@@ -48,9 +53,7 @@ export async function getMetaData(url: string) {
     const fillerWords = ["the", "and", "or", "but", "is", "are", "was", "were", "of", "to", "in", "on", "at"];
     const keywords = [...descriptionKeywords, ...titleKeywords, ...metaKeywords].map((v) => v.toLowerCase().trim().replace(/[^\w\s]|_/g, '')).filter((v, i, a) => v && a.indexOf(v) === i && !fillerWords.includes(v));
 
-    if (!blurDataURL || !byline || !dataURL || !description || !source || !title) return null;
-
-    return {
+    const metadata = {
       blurDataURL,
       byline,
       dataURL,
@@ -63,6 +66,12 @@ export async function getMetaData(url: string) {
       tag: '',
       title: title.length > 70 ? title?.substring(0, 70) + '...' : title,
     };
+
+    console.log(`url.getMetaData proccessed metadata`, metadata);
+
+    if (!metadata.blurDataURL || !metadata.byline || !metadata.dataURL || !metadata.description || !metadata.source || !metadata.title) return null;
+
+    return metadata;
   } catch (error) {
     console.error(`getMetaData encountered error`, error);
     return null;
@@ -104,12 +113,22 @@ export async function getYouTubeData(url: string) {
 
     const isLive = video.snippet.liveBroadcastContent === 'live';
     const isShort = duration < 5 * 60 * 1000;
+
+    const results = await sql`
+      SELECT email, expires, channel 
+      FROM youtube 
+      WHERE channel = ${video.snippet.channelId}
+    `;
+    const result = results?.rows?.[0] || {};
+    const isAd = result.email && result.expires > Date.now();
+    console.error(result);
+
     return {
       byline: video.snippet.channelTitle || 'YouTube',
       channel: video.snippet.channelId || '',
       duration,
       keywords: video.snippet.tags || [],
-      tag: isLive ? 'live' : isShort ? 'short' : ''
+      tag: isAd ? 'ad' : isLive ? 'live' : isShort ? 'short' : ''
     };
   } catch (error) {
     console.error('getYouTubeData encountered error', error);
