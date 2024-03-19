@@ -26,7 +26,7 @@ export const metadata: Metadata = {
     images: 'https://www.getDevNews.com/thumbnail.webp',
     title: 'Get Dev News',
     description:
-      'A news aggregation service by developers for developers covering web, game, and xr development trends.',
+      'A news aggregation service covering ai, game, web, and xr development for professionals.',
     url: 'https://www.getDevNews.com',
     siteName: 'getDevNews',
     locale: 'en_US',
