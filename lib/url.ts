@@ -83,7 +83,6 @@ export async function getYouTubeData(url: string) {
   try {
     const youtube = google.youtube({
       version: 'v3',
-      key: process.env.YOUTUBE_API_KEY,
     });
     
     // Regular expression to match YouTube video ID
@@ -95,6 +94,7 @@ export async function getYouTubeData(url: string) {
     const response = await youtube.videos.list({
       part: ['snippet', 'contentDetails'],
       id: [videoId],
+      key: process.env.YOUTUBE_API_KEY,
     });
 
     const video = response?.data?.items?.[0];
@@ -110,7 +110,7 @@ export async function getYouTubeData(url: string) {
       tag: isLive ? 'live' : isShort ? 'short' : ''
     };
   } catch (error) {
-    console.error('getVideoData encountered error', error);
+    console.error('getYouTubeData encountered error', error);
     return null;
   }
 }
