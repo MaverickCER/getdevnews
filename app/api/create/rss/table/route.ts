@@ -1,9 +1,9 @@
 import { sql } from '@vercel/postgres';
-import { NextRequest, NextResponse, userAgent } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 
 /**
- * Example: http://localhost:3000/api/create/articles/table
- * Endpoint for creating the 'articles' table in the database meant for development
+ * Example: http://localhost:3000/api/create/rss/table
+ * Endpoint for creating the 'rss' table in the database meant for development
  * purposed only. Allows for easy management of systems while building the site.
  * 
  * @param {NextRequest} request The incoming request object.
@@ -19,28 +19,18 @@ export async function GET(request: NextRequest) {
     }
 
     const result = await sql`
-      CREATE TABLE articles (
-        active BOOLEAN DEFAULT TRUE,
-        blurDataURL TEXT,
-        byline TEXT,
-        date BIGINT,
-        dataURL TEXT,
-        description TEXT,
+      CREATE TABLE rss (
         email TEXT,
-        keywords TEXT[],
-        source TEXT UNIQUE,
-        tag TEXT,
-        title TEXT,
-        views BIGINT DEFAULT 0,
-        visits BIGINT DEFAULT 0
+        expires BIGINT DEFAULT 32503680000000,
+        source TEXT UNIQUE
       );
     `;
 
-    console.log(`create/articles/table result`, result);
+    console.log(`create/rss/table result`, result);
 
     return NextResponse.json({ result }, { status: 200 });
   } catch (error) {
-    console.error(`create/articles/table encountered error`, error);
+    console.error(`create/rss/table encountered error`, error);
     return NextResponse.json({ error }, { status: 500 });
   }
 }

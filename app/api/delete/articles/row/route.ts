@@ -40,13 +40,17 @@ export async function GET(request: NextRequest) {
     for await (const url of urls) {
       try {
         const articles = await sql`
-          DELETE FROM articles WHERE source LIKE ${url};
+          UPDATE articles 
+          SET active = FALSE
+          WHERE source LIKE ${url} OR email LIKE ${url}
+          RETURNING source;
         `;
 
-        console.log(`delete/articles/row result for ${url}`, articles);
+        const updates = articles.rows.map(row => row.source);
+        console.log(`delete/articles/row result for ${url}`, updates);
 
-        if (articles.rowCount) {
-          sources.push(url);
+        if (updates.length > 0) {
+          sources.push(...updates);
         }
       } catch (error) {
         console.error(`delete/articles/row encountered error for ${url} of urls`, error);

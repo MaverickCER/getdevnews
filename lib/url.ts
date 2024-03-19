@@ -57,6 +57,7 @@ export async function getMetaData(url: string) {
       date,
       description: description.length > 160 ? description?.substring(0, 160) + '...' : description,
       duration: 0,
+      email: "",
       keywords,
       source,
       tag: '',
