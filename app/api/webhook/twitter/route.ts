@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
 import { sql } from '@vercel/postgres';
-import { parseString } from 'xml2js';
 import crypto from 'crypto';
-import { getMetaData } from '@/lib/url';
 
 /**
  * Example: http://localhost:3000/api/webhook/twitter?hub.challenge=challenge_code
@@ -71,6 +68,14 @@ export async function POST(request: NextRequest) {
     for await (const tweet of payload.tweet_create_events) {
       try {
         const username = tweet.user.screen_name;
+        const results = await sql`
+          SELECT email, expires, username 
+          FROM twitter 
+          WHERE username = ${username}
+        `;
+        const result = results.rows[0];
+        if (!result) throw new Error(`Invalid username ${username}`);
+        if (result.expires < Date.now()) throw new Error(`Expired subscription notification for ${username}`);
         const id = tweet.user.id;
         const url = `https://twitter.com/${username}`;
         const metadata = {
@@ -80,9 +85,10 @@ export async function POST(request: NextRequest) {
           date: Date.parse(tweet.created_at),
           description: tweet.text.length > 160 ? tweet.text?.substring(0, 160) + '...' : tweet.text,
           duration: 0,
+          email: result.email,
           keywords: tweet.text.replace(/[^a-zA-Z0-9!#$%^&*()<>?.=\[\]{}\\|'`~]/g, ','),
           source: `${url}/status/${tweet.id}`,
-          tag: '',
+          tag: result.email ? 'ad' : '',
           title: `${username} on X:`,
         }
         console.log(`webhook/twitter processing metadata for ${id} ${username}`, metadata);
