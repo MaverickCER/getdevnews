@@ -13,7 +13,7 @@ import { NextRequest, NextResponse, userAgent } from 'next/server';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }

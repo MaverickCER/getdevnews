@@ -18,7 +18,7 @@ import { revalidatePath } from 'next/cache';
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }
@@ -37,7 +37,7 @@ export async function GET(request: NextRequest) {
 
     const emailParam = searchParams.get('email') || '';
     const url = `https://twitter.com/${username}/status/${id}`;
-    console.log(`create/articles/row called for${emailParam ? ` ${emailParam}` : ''} URL ${url}`);
+    console.log(`create/twitter/article called for${emailParam ? ` ${emailParam}` : ''} URL ${url}`);
 
     const metadata = {
       blurDataURL: `data:image/webp;base64,UklGRqYAAABXRUJQVlA4IJoAAACQAwCdASoSAAoAPm0qkUWkIqGYBABABsSgAD4hG1FUWvyTKHAAAP79YPoLfDIpv9TX/ogTVmREI8Sv4zX8NsQPy1esqk/75c3H/xoXs4kC4kg0EkmTB1UXnuvQk/WQ4crqf6//0jTAE9E5fhSP/3YuV/WA7fBqNA//5cqf/D/Y/+fW+RBPLoCuSW2oymbMX71TAjsDFWF5TgAA`,
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
       title: `${username} on X:`,
     }
 
-    console.log(`create/articles/row processing metadata for ${url}`, metadata);
+    console.log(`create/twitter/article processing metadata for ${url}`, metadata);
     const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
 
     const articles = await sql`
@@ -61,13 +61,13 @@ export async function GET(request: NextRequest) {
       VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords}}`}, ${source}, ${tag}, ${title});
     `;
 
-    console.log(`create/articles/row result for ${url}`, articles);
+    console.log(`create/twitter/article result for ${url}`, articles);
     
     revalidatePath('/');
 
     return NextResponse.json({ articles }, { status: 200 });
   } catch (error) {
-    console.error(`create/articles/row encountered error`, error);
+    console.error(`create/twitter/article encountered error`, error);
     return NextResponse.json({ error }, { status: 500 });
   }
 }

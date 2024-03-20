@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   const channels = [];
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }
@@ -71,10 +71,9 @@ export async function GET(request: NextRequest) {
         console.error(`delete/youtube/row encountered error for ${url} of urls`, error);
       }
     }
+    return NextResponse.json({ channels, count: channels.length }, { status: 200 });
   } catch (error) {
     console.error(`delete/youtube/row encountered error`, error);
-  } finally {
-    console.log(`delete/youtube/row processed ${channels.length} youtube channels`)
-    return NextResponse.json({ channels }, { status: 200 });
+    return NextResponse.json({ error, channels, count: channels.length }, { status: 500 });
   }
 }

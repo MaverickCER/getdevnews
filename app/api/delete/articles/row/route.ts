@@ -28,7 +28,7 @@ export async function GET(request: NextRequest) {
   const sources = [];
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }
@@ -58,9 +58,9 @@ export async function GET(request: NextRequest) {
     }
     
     revalidatePath('/');
+    return NextResponse.json({ sources, count: sources.length }, { status: 200 });
   } catch (error) {
     console.error(`delete/articles/row encountered error`, error);
-  } finally {
-    return NextResponse.json({ articles: sources.length }, { status: 200 });
+    return NextResponse.json({ error, sources, count: sources.length }, { status: 500 });
   }
 }

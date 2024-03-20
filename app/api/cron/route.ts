@@ -77,8 +77,6 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error(`cron encountered error`, error);
-  } finally {
-    console.log(`cron processed ${links.length} rss feed links`, links);
   }
 
   const channels = [];
@@ -128,10 +126,8 @@ export async function GET(request: NextRequest) {
     }
   } catch (error) {
     console.error(`cron encountered error`, error);
-  } finally {
-    console.log(`cron processed ${channels.length} youtube channels`, channels);
   }
 
   console.log(`cron processed ${channels.length} youtube channels and ${links.length} rss feeds`);
-  return NextResponse.json({ links, channels }, { status: 200 });
+  return NextResponse.json({ links, channels, linksCount: links.length, channelsCount: channels.length }, { status: 200 });
 }

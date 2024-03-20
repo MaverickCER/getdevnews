@@ -6,8 +6,8 @@ import Parser from 'rss-parser';
 
 /**
  * Example: http://localhost:3000/api/create/rss/row?url=https%3A%2F%2Fmedium.com%2Ffeed%2F%40kevin-jonathan
- * This endpoint will serve to allow automated and manual processes to add links
- * to the home page from rss feeds. All links will be able to get the baseline data through the
+ * This endpoint will serve to allow automated and manual processes to add sources
+ * to the home page from rss feeds. All sources will be able to get the baseline data through the
  * getMetaData function.
  * 
  * Security:
@@ -20,10 +20,10 @@ import Parser from 'rss-parser';
  * an error message.
  */
 export async function GET(request: NextRequest) {
-  const links = [];
+  const sources = [];
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }
@@ -51,17 +51,16 @@ export async function GET(request: NextRequest) {
           console.log(`create/rss/row result for ${url}`, updates.length);
   
           if (updates.length > 0) {
-            links.push(...updates);
+            sources.push(...updates);
           }
         }
       } catch (error) {
         console.error(`create/rss/row encountered error for ${url} of urls`, error);
       }
     }
+    return NextResponse.json({ sources, count: sources.length }, { status: 200 });
   } catch (error) {
     console.error(`create/rss/row encountered error`, error);
-  } finally {
-    console.log(`create/rss/row processed ${links.length} rss feed links`)
-    return NextResponse.json({ links }, { status: 200 });
+    return NextResponse.json({ error, sources, count: sources.length }, { status: 500 });
   }
 }

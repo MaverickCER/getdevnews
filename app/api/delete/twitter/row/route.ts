@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
   const usernames = [];
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }
@@ -39,10 +39,9 @@ export async function GET(request: NextRequest) {
     if (updates.length > 0) {
       usernames.push(...updates);
     }
+    return NextResponse.json({ usernames, count: usernames.length }, { status: 200 });
   } catch (error) {
     console.error(`delete/twitter/row encountered error`, error);
-  } finally {
-    console.log(`delete/twitter/row processed ${usernames.length} twitter usernames`)
-    return NextResponse.json({ usernames }, { status: 200 });
+    return NextResponse.json({ error, usernames, count: usernames.length }, { status: 500 });
   }
 }

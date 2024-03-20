@@ -18,10 +18,10 @@ import { revalidatePath } from 'next/cache';
  * an error message.
  */
 export async function GET(request: NextRequest) {
-  const links = [];
+  const sources = [];
   try {
     const { searchParams } = new URL(request.url);
-    const key = searchParams.get('key');
+    const key = decodeURIComponent(searchParams.get('key') || '');
     if (key !== process.env.API_KEY && process.env.NODE_ENV !== 'development') {
       throw new Error(`Invalid key: ${key}`);
     }
@@ -44,16 +44,15 @@ export async function GET(request: NextRequest) {
         console.log(`delete/rss/row result for ${url}`, updates);
 
         if (updates.length > 0) {
-          links.push(...updates);
+          sources.push(...updates);
         }
       } catch (error) {
         console.error(`delete/rss/row encountered error for ${url} of urls`, error);
       }
     }
+    return NextResponse.json({ sources, count: sources.length }, { status: 200 });
   } catch (error) {
     console.error(`delete/rss/row encountered error`, error);
-  } finally {
-    console.log(`delete/rss/row processed ${links.length} rss feed links`)
-    return NextResponse.json({ links }, { status: 200 });
+    return NextResponse.json({ error, sources, count: sources.length }, { status: 500 });
   }
 }

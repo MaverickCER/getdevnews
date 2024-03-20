@@ -121,12 +121,12 @@ export async function getYouTubeData(url: string) {
     `;
     const result = results?.rows?.[0] || {};
     const isAd = result.email && result.expires > Date.now();
-    console.error(result);
 
     return {
       byline: video.snippet.channelTitle || 'YouTube',
       channel: video.snippet.channelId || '',
       duration,
+      email: result.email,
       keywords: video.snippet.tags || [],
       tag: isAd ? 'ad' : isLive ? 'live' : isShort ? 'short' : ''
     };
