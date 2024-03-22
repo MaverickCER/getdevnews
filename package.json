@@ -3,9 +3,9 @@
   "version": "0.1.0",
   "private": false,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev && node public/index.js",
     "build": "next build",
-    "start": "next start",
+    "start": "next start && node public/index.js",
     "lint": "next lint"
   },
   "dependencies": {

@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidateTag } from 'next/cache';
+import { revalidatePath } from 'next/cache';
 import { sql } from '@vercel/postgres';
-import { parseString } from 'xml2js';
 import crypto from 'crypto';
 import { getMetaData, getYouTubeData } from '@/lib/url';
 
@@ -63,78 +62,44 @@ export async function POST(request: NextRequest) {
 
     const payload = values.join('');
     console.log(`webhook/youtube payload`, payload);
-    NextResponse.json({ message: 'acknowledged' }, { status: 200 });
 
     // validate signature - throws error if not equal
     const signature = request.headers.get('x-hub-signature') || '';
     const expectedSignature = `sha1=${crypto.createHmac('sha1', process.env.YOUTUBE_API_SECRET || '').update(payload).digest('hex')}`;
     crypto.timingSafeEqual(Buffer.from(signature), Buffer.from(expectedSignature));
 
-    // parse video link
-    parseString(payload || '', async (error, result) => {
-      if (error) {
-        console.error(`api/webhook/youtube encountered parsing error`, error);
-        return;
-      }
-      if (!result) return;
+    // Regular expression to match either watch?v= or /shorts/
+    const regex = /(?:watch\?v=|\/shorts\/)([a-zA-Z0-9_-]{11})/;
+    const match = (payload || '').match(regex);
 
-      const urls: string[] = [];
-      try {
-        const extractUrls = (obj: any) => {
-          for (const key in obj) {
-            if (obj.hasOwnProperty(key)) {
-              if (key === '$' && obj[key].hasOwnProperty('href')) {
-                urls.push(obj[key].href);
-              } else if (typeof obj[key] === 'object') {
-                extractUrls(obj[key]);
-              }
-            }
-          }
-        };
+    const url = match && match.length > 1 ? `https://www.youtube.com/watch?v=${match[1]}` : '';
+    if (!url) throw new Error(`Invalid url: ${url}`);
 
-        extractUrls(result);
+    const metadata = await getMetaData(url);
+    if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
 
-        console.log(`urls:`, urls);
-        // Proceed with the rest of your code
-      } catch (error) {
-        console.error(`Error extracting urls from XML`, error);
-      }
+    const youtube = await getYouTubeData(url);
+    if (!youtube) throw new Error(`Invalid youtube link: ${url}`);
+    metadata.byline = youtube.byline;
+    metadata.duration = youtube.duration;
+    metadata.email = youtube.email;
+    metadata.keywords = [...metadata.keywords, ...youtube.keywords];
+    metadata.tag = youtube.tag;
 
-      const videos = [];
-      for await (const url of urls) {
-        try {
-          const metadata = await getMetaData(url);
-          if (typeof metadata !== 'object' || metadata === null) throw new Error(`Invalid URL: ${url} - ${JSON.stringify(metadata)}`);
+    console.log(`webhook/youtube processing metadata for ${url}`, metadata);
+    const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
 
-          const youtube = await getYouTubeData(url);
-          if (!youtube) throw new Error(`Invalid youtube link: ${url}`);
-          metadata.byline = youtube.byline;
-          metadata.duration = youtube.duration;
-          metadata.email = youtube.email;
-          metadata.keywords = [...metadata.keywords, ...youtube.keywords];
-          metadata.tag = youtube.tag;
+    const articles = await sql`
+      INSERT INTO articles (blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title) 
+      VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
+    `;
 
-          console.log(`webhook/youtube processing metadata for ${url}`, metadata);
-          const { blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title } = metadata;
+    console.log(`webhook/youtube processed ${url}`, articles);
 
-          const articles = await sql`
-          INSERT INTO articles (blurDataURL, byline, dataURL, date, description, email, keywords, source, tag, title) 
-          VALUES (${blurDataURL}, ${byline}, ${dataURL}, ${date}, ${description}, ${email}, ${`{${keywords.join(',')}}`}, ${source}, ${tag}, ${title});
-        `;
-
-          console.log(`webhook/youtube result for ${url}`, articles);
-
-          if (articles.rowCount) {
-            videos.push(source);
-          }
-        } catch (error) {
-          console.error(`webhook/youtube encountered error for ${url} of urls`, error);
-        }
-      }
-
-      console.log(`webhook/youtube processed ${urls.length} urls for ${videos.length} videos`, payload);
-    });
+    revalidatePath('/');
+    return NextResponse.json({ message: 'acknowledged' }, { status: 200 });
   } catch (error) {
     console.error(`webhook/youtube encountered error`, error);
+    return NextResponse.json({ error }, { status: 500 });
   }
 }
